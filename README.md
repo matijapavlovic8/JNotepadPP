@@ -1,0 +1,2 @@
+# JNotepadPP
+Localized Notepad application.
