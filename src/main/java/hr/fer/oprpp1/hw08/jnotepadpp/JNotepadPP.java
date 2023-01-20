@@ -285,7 +285,7 @@ public class JNotepadPP extends JFrame {
         JTextArea comp = currentModel.getTextComponent();
 
         String len = this.provider.getString("length");
-        this.length.setText(len + " " + comp.getDocument().getLength());
+        this.length.setText(" " + len + " " + comp.getDocument().getLength());
 
         int pos = currentModel.getTextComponent().getCaretPosition();
         Element root = currentModel.getTextComponent().getDocument().getDefaultRootElement();
@@ -293,8 +293,10 @@ public class JNotepadPP extends JFrame {
         int col = pos - root.getElement(line - 1).getStartOffset() + 1;
         int selected = comp.getSelectionEnd() - comp.getSelectionStart();
 
-        this.info.setText(this.provider.getString("info")
-            + " " + line + " " + col + " " + selected);
+        this.info.setText("   " + this.provider.getString("info")
+            + ": " + provider.getString("line") +
+            " " + line + " " +
+            provider.getString("col") + " " + col + " " + provider.getString("selected") + " " + selected);
     }
 
     /**
@@ -400,16 +402,25 @@ public class JNotepadPP extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 SingleDocumentModel curr = mdmodel.getCurrentDocument();
-                if(curr.isModified()){
-                    int opt = JOptionPane.showConfirmDialog(JNotepadPP.this,
-                        provider.getString("closeModified"),
-                        provider.getString("warning"),
-                        JOptionPane.YES_NO_OPTION);
-                    if(opt == JOptionPane.NO_OPTION)
-                        return;
+                String[] options = new String[]{provider.getString("saveDocument"), provider.getString("dontSave"), provider.getString("cancel")};
+                if(!curr.isModified()){
                     mdmodel.closeDocument(curr);
                 } else {
-                    mdmodel.closeDocument(curr);
+                    String title = curr.getFilePath() == null ? "unnamed" : curr.getFilePath().getFileName().toString();
+                    int opt = JOptionPane.showOptionDialog(JNotepadPP.this,
+                        provider.getString("closeModified"),
+                        title, JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null, options, options[2]);
+
+                    if(opt == 0){
+                        saveAs.actionPerformed(e);
+
+                    } else if(opt == 2){
+                        return;
+                    } else {
+                        mdmodel.closeDocument(curr);
+                    }
                 }
             }
         };
@@ -417,11 +428,9 @@ public class JNotepadPP extends JFrame {
         this.exit = new LocalizableAction("exit", provider) {
             @Override
             public void actionPerformed(ActionEvent e) {
-                SingleDocumentModel curr = mdmodel.getCurrentDocument();
-                //while(curr != null){
-                    //closeTab.actionPerformed(e);
-                    //curr = mdmodel.getCurrentDocument();
-                //}
+                while(mdmodel.getCurrentDocument() != null){
+                    closeTab.actionPerformed(e);
+                }
                 dispose();
             }
         };
